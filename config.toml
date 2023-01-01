@@ -1,0 +1,39 @@
+baseURL = "https://blog.dhamith.me/"
+languageCode = "en-us"
+title = "Dhamith's Notes"
+theme="terminal"
+copyright = "© dhamith93"
+paginate=3
+
+[params]
+  centerTheme = true
+  readingTime = true
+
+[languages]
+    [languages.en.params.logo]
+      logoText = "Dhamith's Notes"
+      logoHomeLink = "/"
+
+# Social Tags
+
+[[params.social]]
+name = "GitHub"
+icon = "github"
+url = "https://github.com/dhamith93"
+
+# Main menu Items
+
+[[menu.main]]
+name = "Home"
+url = "/"
+weight = 1
+
+[[menu.main]]
+name = "All posts"
+url = "/posts"
+weight = 2
+
+[[menu.main]]
+name = "Tags"
+url = "/tags"
+weight = 3
