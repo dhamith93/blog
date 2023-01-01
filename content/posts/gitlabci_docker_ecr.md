@@ -37,8 +37,7 @@ build_image:
     - aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
     - aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
     - aws configure set region $AWS_DEFAULT_REGION
-    - TOKEN=$(aws ecr-public get-login-password --region $AWS_DEFAULT_REGION)
-    - docker login -u AWS -p $TOKEN $IMAGE_REGISTRY
+    - aws ecr-public get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $IMAGE_REGISTRY
   script:
     - tar -xvf ./release/client_linux_x86_64.tar.gz 
     - cd client_linux_x86_64
@@ -71,8 +70,7 @@ before_script:
     - aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
     - aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
     - aws configure set region $AWS_DEFAULT_REGION
-    - TOKEN=$(aws ecr-public get-login-password --region $AWS_DEFAULT_REGION)
-    - docker login -u AWS -p $TOKEN $IMAGE_REGISTRY
+    - aws ecr-public get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $IMAGE_REGISTRY
 ```
 
 The next step is to extract the token required to push the image to the ECR repository. This command can be changed depending on the private/public status of the ECR repository. It is better to copy and modify that command from the `View push commands` section in the ECR repository. Once the token has been retrieved, it is used to log in to the ECR repository through docker. Which concludes the `before_script` section. 
@@ -138,8 +136,7 @@ build_image:
     - aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
     - aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
     - aws configure set region $AWS_DEFAULT_REGION
-    - TOKEN=$(aws ecr-public get-login-password --region $AWS_DEFAULT_REGION)
-    - docker login -u AWS -p $TOKEN $IMAGE_REGISTRY
+    - aws ecr-public get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $IMAGE_REGISTRY
   script:
     - tar -xvf ./release/client_linux_x86_64.tar.gz 
     - cd client_linux_x86_64
