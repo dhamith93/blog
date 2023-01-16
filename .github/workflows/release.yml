@@ -22,7 +22,7 @@ jobs:
         run: hugo -D 
 
       - name: Pack
-        run: mv public blog && tar -cvf blog.tar.gz 
+        run: mv public blog && tar -cvf blog.tar.gz blog
 
       - name: Bump version and push tag
         id: tag_version
