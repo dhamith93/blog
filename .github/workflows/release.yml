@@ -24,7 +24,7 @@ jobs:
         run: hugo -D 
 
       - name: Pack
-        run: mv public blog && tar -cvf blog.tar.gz blog && sha512sum blog.zip | cut  -f1 -d ' ' | tr -d "\n\r" > hash.txt 
+        run: mv public blog && tar -cvf blog.tar.gz blog && sha512sum blog.tar.gz | cut  -f1 -d ' ' | tr -d "\n\r" > hash.txt 
 
       - name: Bump version and push tag
         id: tag_version
