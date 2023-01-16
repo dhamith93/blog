@@ -24,7 +24,7 @@ jobs:
         run: hugo -D 
 
       - name: Pack
-        run: mv public blog && tar -cvf blog.tar.gz blog && ls -la
+        run: mv public blog && tar -cvf blog.tar.gz blog && sha512sum blog.zip | cut  -f1 -d ' ' | tr -d "\n\r" > hash.txt 
 
       - name: Bump version and push tag
         id: tag_version
@@ -35,7 +35,7 @@ jobs:
       - name: Upload Release
         uses: ncipollo/release-action@v1
         with:
-          artifacts: 'blog.tar.gz'
+          artifacts: 'blog.tar.gz, hash.txt'
           tag: ${{ steps.tag_version.outputs.new_tag }}
           name: Release ${{ steps.tag_version.outputs.new_tag }}
           commit: ${{ steps.vars.outputs.sha }}
