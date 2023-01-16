@@ -1,0 +1,41 @@
+name: release
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      
+      - name: Install Hugo
+        run: | 
+          wget https://github.com/gohugoio/hugo/releases/download/v0.109.0/hugo_extended_0.109.0_linux-amd64.deb \
+          && dpkg -i hugo_extended_0.109.0_linux-amd64.deb 
+
+      - name: Build release
+        run: hugo -D 
+
+      - name: Pack
+        run: mv public blog && tar -cvf blog.tar.gz 
+
+      - name: Bump version and push tag
+        id: tag_version
+        uses: mathieudutour/github-tag-action@v5.6
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }} 
+
+      - name: Upload Release
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: 'blog.tar.gz'
+          tag: ${{ steps.tag_version.outputs.new_tag }}
+          name: Release ${{ steps.tag_version.outputs.new_tag }}
+          commit: ${{ steps.vars.outputs.sha }}
+          token: ${{ secrets.GITHUB_TOKEN }} 
+        
