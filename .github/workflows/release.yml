@@ -10,6 +10,8 @@ jobs:
   
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v2
       
@@ -22,7 +24,7 @@ jobs:
         run: hugo -D 
 
       - name: Pack
-        run: mv public blog && tar -cvf blog.tar.gz blog
+        run: mv public blog && tar -cvf blog.tar.gz blog && ls -la
 
       - name: Bump version and push tag
         id: tag_version
