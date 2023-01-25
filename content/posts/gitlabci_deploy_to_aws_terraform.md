@@ -169,7 +169,7 @@ plan:
       when: always
 ```
 
-In the planning stage, I have set up a rule to run the stage only when the branch is either `dev` or `prod`. This avoids any pipeline failures due to unsupported branches running the pipeline. And with the validate state set as a dependency, the stage will only run if the terraform files are validated.
+In the planning stage, I have set up a rule to run the stage only when the branch is either `dev` or `prod`. This avoids any pipeline failures due to unsupported branches running the pipeline. And with the validate state set as a dependency, the stage will only run if the terraform files are validated. Also I am using the `$CI_COMMIT_BRANCH` predefined Gitlab variable to pick which variable file to be used when running the `plan` command. When it is `prod`, the command will use `prod.tfvars` and when it is `dev` the command will use the `dev.tfvars` file.
 
 And it saves the out file as an artifact to be used in the apply stage. 
 
