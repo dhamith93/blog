@@ -192,3 +192,5 @@ And finally, in the Apply stage, again, I have set up a rule to run the stage on
 # Conclusion
 
 Gitlab CI provides an easy way of dealing with Terraform automation with their hosted or SaaS solution. And this should also work without any issues in thier free tier / community edition as well.  
+
+This is a very simple set up to demostrate how to use Terraform with Gitlab CI. But this can be extended into much more complex deployment pipelines as needed. For example, you can set it up to run the apply after a merge request. Or set up `CODEOWNERS` to further restrict access on `prod`. 
