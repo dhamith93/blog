@@ -11,7 +11,7 @@ readingTime = true
 hideComments = false
 +++
 
-When I started this blog, I was using Wordpress. I was familiar with it and maintaining a Mariadb instance in my small server was looking fun for some reason. But naturally my server started getting unwanted requests that were trying to exploit the Wordpress install I was running. That and keeping a Mariadb instance just for a few blog posts was wasteful, I moved away from Wordpress to [Hugo](https://gohugo.io/) . Hugo is a very customizable static site generator with support for Markdown formatting, which was simple enough for me to quickly set up. 
+When I started this blog, I was using Wordpress. I was familiar with it and maintaining a Mariadb instance in my small server was looking fun for some reason. But naturally my server started getting unwanted requests that were trying to exploit the Wordpress install I was running. Because of that and keeping a Mariadb instance just for a few blog posts beginning to look wasteful, so I moved away from Wordpress to [Hugo](https://gohugo.io/) . Hugo is a very customizable static site generator with support for Markdown formatting, which was simple enough for me to quickly set up. 
 
 With Github Actions and Webhooks, you can update, delete, or publish a new post just by pushing changes to the master branch. All you need is a Github repo to hold your Hugo code, and a server to publish the blog to. 
 
