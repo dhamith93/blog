@@ -16,9 +16,12 @@ hideComments = false
 
 This is a simple introduction to GitOps using **GitLab**, **Flux**, and **Helm charts**. Objective of this is to deploy a small microservice application written in Go on to a Kubernetes cluster with minimal manual interactions. There are few notes to consider; the pipelines, triggers, conditions, etc. are kept in a simplest form to keep things easier to understand and replicated. There are many strategies to test, build, and deploy applications as well as create deployment pipelines. I believe readers can customize, improve, and make it more secure to suite their needs. 
 
+> Note: Source code used in this is used for learning purposes only. If you are using them for production work, please consider your project infrastructure and security needs.
+
 I used GitLab Community Edition (v17.0.1) with a local Kubernetes cluster (v1.28.10) and Flux (v2.3.0) deployed on Proxmox VMs. 
 
 > **Full repo can be found here:** https://github.com/dhamith93/gitops-sample
+
 ### Repo structure
 
 ```
@@ -211,10 +214,10 @@ Helm charts for client and maths-api service are also similar. Only difference b
 
 ### CI vars
 
-| Variable       |                                                                  |
-| -------------- | ---------------------------------------------------------------- |
-| CI_KNOWN_HOSTS | Known host entry for GitLab host taken from `~/.ssh/known_hosts` |
-| SSH_PUSH_KEY   | Private key for the deploy key RSA key pair                      |
+| Variable         |                                                                  |
+| ---------------- | ---------------------------------------------------------------- |
+| `CI_KNOWN_HOSTS` | Known host entry for GitLab host taken from `~/.ssh/known_hosts` |
+| `SSH_PUSH_KEY`   | Private key for the deploy key RSA key pair                      |
 
 
 There are build and release stages implemented for the helm charts in `/charts/<service>/.gitlab-ci.yml` files. The build stage creates the Kubernetes manifest file for the service using the `helm template` command. The command will use the values specified in the `values.yaml` file in the helm chart and output the filled up template. The output then redirected to the file `/clusters/playground/calculator/<service>/release.yml`. The path for the `release.yml` file is already created on the repo before hand to avoid any errors during the build. This manifest file will be used by Flux to ultimately deploy the application to the Kubernetes cluster. For this stage `alpine/helm` image is used.
