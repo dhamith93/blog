@@ -36,6 +36,8 @@ Second byte of the data contains the what type of value is being sent. `0x13` fo
 
 Third and the fourth bytes contains the first and second digits of the value being sent. `0x05` and `0x04` for the temperature `54c`. And `0x00` and `0x02` for CPU usage of `02%`. 
 
+**Update:** fifth byte is used for turning on blinking for alerting as I found out during my `testing`.
+
 With the information I was able to collect with my tiny experiment, I wrote a Go program to get the display on the cooler working under Linux. I checked it with Ubuntu 24.04 and Proxmox and the temperature and CPU usage values were displaying on the cooler just as on Windows. I set this up as a service and all was done. 
 
 While I used many ported applications and drivers in the past, this was the first time I was able to work something out for myself. It would be better if DeepCool themselves can release a version for Linux, but this was a good little exercise into monitoring and implementing USB communication.
@@ -126,11 +128,9 @@ func main() {
 		case 2:
 			b[3] = byte(arr[0])
 			b[4] = byte(arr[1])
-		case 3:
-			b[3] = byte(arr[0])
-			b[4] = byte(arr[1])
-			b[5] = byte(arr[2])
 		}
+
+		// TODO: implement `alert` threshold and send b[5] = 0x1
 
 		b[0] = 0x10
 		_, err = d.Write(b)
