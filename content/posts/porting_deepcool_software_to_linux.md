@@ -124,7 +124,8 @@ func main() {
 
 		switch len(arr) {
 		case 1:
-			b[3] = byte(arr[0])
+			b[3] = 0x0
+			b[4] = byte(arr[0])
 		case 2:
 			b[3] = byte(arr[0])
 			b[4] = byte(arr[1])
