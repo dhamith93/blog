@@ -8,6 +8,7 @@ paginate=3
 [params]
   centerTheme = true
   readingTime = true
+  favicon = "/favicon.svg"
 
 [languages]
     [languages.en.params.logo]

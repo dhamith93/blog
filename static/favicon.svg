@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <title>d</title>
+  <!-- Geometric "d": bowl + stem drawn as shapes, so it needs no font to render. -->
+  <rect width="32" height="32" rx="7" fill="#e8974a"/>
+  <g fill="none" stroke="#0d0f13" stroke-width="3.2">
+    <circle cx="15.2" cy="19.2" r="5.6"/>
+  </g>
+  <rect x="20.8" y="5.6" width="3.2" height="20.8" rx="1.6" fill="#0d0f13"/>
+</svg>
