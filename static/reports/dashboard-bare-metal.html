@@ -1,0 +1,949 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>athena · systats</title>
+
+<style>
+:root {
+  --bg: #f4f5f7; --panel: #ffffff; --line: #e3e5e9; --ink: #1a1c1f;
+  --muted: #6b7280; --faint: #f0f1f4; --accent: #3b82c4; --track: #e8eaee;
+  --shadow: 0 1px 2px rgba(16,18,22,.06), 0 1px 8px rgba(16,18,22,.04);
+}
+ 
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #14161a; --panel: #1c1f24; --line: #2a2e35; --ink: #e8eaed;
+    --muted: #9aa1ab; --faint: #22262c; --accent: #5a9fd4; --track: #2a2e35;
+    --shadow: 0 1px 2px rgba(0,0,0,.4);
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #14161a; --panel: #1c1f24; --line: #2a2e35; --ink: #e8eaed;
+  --muted: #9aa1ab; --faint: #22262c; --accent: #5a9fd4; --track: #2a2e35;
+  --shadow: 0 1px 2px rgba(0,0,0,.4);
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; padding: 1.75rem 1.5rem 3rem;
+  background: var(--bg); color: var(--ink);
+  font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--accent); }
+header { max-width: 1280px; margin: 0 auto 1.5rem; }
+h1 { font-size: 1.35rem; margin: 0 0 .2rem; letter-spacing: -.01em; }
+.sub { color: var(--muted); font-size: .85rem; }
+.wrap { max-width: 1280px; margin: 0 auto; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem; }
+.grid.wide { grid-template-columns: repeat(auto-fit, minmax(440px, 1fr)); }
+.panel {
+  background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+  padding: 1rem 1.1rem 1.1rem; box-shadow: var(--shadow); min-width: 0;
+}
+.panel h2 {
+  font-size: .78rem; text-transform: uppercase; letter-spacing: .07em;
+  color: var(--muted); margin: 0 0 .9rem; font-weight: 600;
+}
+.span-all { grid-column: 1 / -1; }
+.gauge-row { display: flex; align-items: center; gap: 1.1rem; flex-wrap: wrap; }
+.gauge { flex: 0 0 auto; }
+.gauge text.value { font-size: 26px; font-weight: 650; fill: var(--ink); }
+.gauge text.caption { font-size: 11px; fill: var(--muted); letter-spacing: .04em; }
+.stats { display: grid; gap: .3rem; font-size: .85rem; min-width: 0; }
+.stats div { display: flex; justify-content: space-between; gap: 1.25rem; }
+.stats dt, .stats .k { color: var(--muted); }
+.stats .v { font-variant-numeric: tabular-nums; font-weight: 550; }
+.bars { display: grid; gap: .45rem; }
+.bar-line { display: grid; grid-template-columns: 4.2rem 1fr 3.6rem; align-items: center; gap: .6rem; font-size: .78rem; }
+.bar-line .lbl { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bar-line .val { text-align: right; font-variant-numeric: tabular-nums; }
+.track { background: var(--track); border-radius: 999px; height: 7px; overflow: hidden; }
+.fill { display: block; height: 100%; border-radius: 999px; }
+.cores { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: .45rem 1rem; }
+table { width: 100%; border-collapse: collapse; font-size: .82rem; }
+th {
+  text-align: left; font-weight: 600; color: var(--muted); font-size: .72rem;
+  text-transform: uppercase; letter-spacing: .05em; padding: 0 .55rem .45rem; border-bottom: 1px solid var(--line);
+}
+td { padding: .5rem .55rem; border-bottom: 1px solid var(--faint); vertical-align: middle; }
+tr:last-child td { border-bottom: none; }
+td.num { text-align: right; font-variant-numeric: tabular-nums; }
+td.mono, .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .95em; }
+td.trunc { max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.scroll { overflow-x: auto; }
+.pill {
+  display: inline-block; padding: .1rem .5rem; border-radius: 999px;
+  font-size: .7rem; font-weight: 600; letter-spacing: .03em;
+}
+.pill-ok { background: rgba(47,158,68,.14); color: #2f9e44; }
+.pill-warn { background: rgba(232,163,23,.16); color: #b57e0a; }
+.pill-crit { background: rgba(214,69,69,.14); color: #d64545; }
+.pill-muted { background: var(--faint); color: var(--muted); }
+.stacked { display: flex; height: 12px; border-radius: 999px; overflow: hidden; background: var(--track); }
+.stacked span { display: block; height: 100%; }
+.legend { display: flex; flex-wrap: wrap; gap: .35rem .9rem; margin-top: .7rem; font-size: .78rem; }
+.legend span.dot { width: 9px; height: 9px; border-radius: 3px; display: inline-block; margin-right: .35rem; }
+.legend div { display: flex; align-items: center; color: var(--muted); }
+.legend b { color: var(--ink); font-weight: 600; margin-left: .3rem; font-variant-numeric: tabular-nums; }
+.note { color: var(--muted); font-size: .82rem; }
+.banner {
+  border: 1px solid var(--line); border-left: 3px solid var(--accent);
+  background: var(--panel); border-radius: 8px; padding: .85rem 1rem; margin-bottom: 1rem;
+}
+.banner h2 { margin-bottom: .6rem; }
+.temp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap: .8rem; }
+.temp { text-align: center; }
+.temp .chip { font-size: .7rem; color: var(--muted); margin-top: .2rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.temp .lim { font-size: .65rem; color: var(--muted); }
+footer { max-width: 1280px; margin: 1.75rem auto 0; color: var(--muted); font-size: .78rem; }
+footer code { background: var(--faint); padding: .1rem .35rem; border-radius: 4px; }
+.problems { margin-top: 1rem; }
+.problems li { margin-bottom: .25rem; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>athena</h1>
+  <div class="sub">
+    Ubuntu 24.04.5 LTS · 
+    kernel 6.8.0-139-generic · 
+    up 31h20m4s · 
+    generated Wed 23 Sep 2026 01:57:46 &#43;0530 in 1.006s
+  </div>
+</header>
+
+<div class="wrap">
+
+
+
+<div class="grid">
+
+  
+  <div class="panel">
+    <h2>CPU</h2>
+    <div class="gauge-row">
+      
+<svg class="gauge" width="140" height="140" viewBox="0 0 140 140" role="img" aria-label="CPU 1%">
+  <circle cx="70" cy="70" r="54" fill="none" stroke="var(--track)" stroke-width="12"/>
+  <circle cx="70" cy="70" r="54" fill="none" stroke="#2f9e44" stroke-width="12"
+          stroke-dasharray="3.39 335.9" stroke-linecap="round"
+          transform="rotate(-90 70 70)"/>
+  <text class="value" x="70" y="70" text-anchor="middle" dy=".1em">1%</text>
+  <text class="caption" x="70" y="70" text-anchor="middle" dy="1.75em">CPU</text>
+</svg>
+
+      <div class="stats">
+        <div><span class="k">Load 1m</span><span class="v">0.00</span></div>
+        <div><span class="k">Load 5m</span><span class="v">0.00</span></div>
+        <div><span class="k">Load 15m</span><span class="v">0.00</span></div>
+        <div><span class="k">Cores</span><span class="v">4 logical / 4 physical</span></div>
+      </div>
+    </div>
+    
+    <div class="cores" style="margin-top:.9rem">
+      
+      <div class="bar-line" style="grid-template-columns:3rem 1fr 2.6rem">
+        <span class="lbl">cpu0</span>
+        <span class="track"><span class="fill" style="width:0%;background:#2f9e44"></span></span>
+        <span class="val">0%</span>
+      </div>
+      
+      <div class="bar-line" style="grid-template-columns:3rem 1fr 2.6rem">
+        <span class="lbl">cpu1</span>
+        <span class="track"><span class="fill" style="width:0%;background:#2f9e44"></span></span>
+        <span class="val">0%</span>
+      </div>
+      
+      <div class="bar-line" style="grid-template-columns:3rem 1fr 2.6rem">
+        <span class="lbl">cpu2</span>
+        <span class="track"><span class="fill" style="width:3%;background:#2f9e44"></span></span>
+        <span class="val">3%</span>
+      </div>
+      
+      <div class="bar-line" style="grid-template-columns:3rem 1fr 2.6rem">
+        <span class="lbl">cpu3</span>
+        <span class="track"><span class="fill" style="width:6%;background:#2f9e44"></span></span>
+        <span class="val">6%</span>
+      </div>
+      
+    </div>
+    
+    <p class="note" style="margin:.8rem 0 0">Intel(R) N100</p>
+  </div>
+  
+
+  
+  <div class="panel">
+    <h2>Memory</h2>
+    <div class="gauge-row">
+      
+<svg class="gauge" width="140" height="140" viewBox="0 0 140 140" role="img" aria-label="Memory 8%">
+  <circle cx="70" cy="70" r="54" fill="none" stroke="var(--track)" stroke-width="12"/>
+  <circle cx="70" cy="70" r="54" fill="none" stroke="#2f9e44" stroke-width="12"
+          stroke-dasharray="28.33 310.97" stroke-linecap="round"
+          transform="rotate(-90 70 70)"/>
+  <text class="value" x="70" y="70" text-anchor="middle" dy=".1em">8%</text>
+  <text class="caption" x="70" y="70" text-anchor="middle" dy="1.75em">Memory</text>
+</svg>
+
+      <div class="stats">
+        <div><span class="k">Used</span><span class="v">641.43 MB</span></div>
+        <div><span class="k">Total</span><span class="v">7682.98 MB</span></div>
+        <div><span class="k">Free</span><span class="v">4805.22 MB</span></div>
+        <div><span class="k">Available</span><span class="v">6764.78 MB available</span></div>
+      </div>
+    </div>
+  </div>
+  
+
+  
+  <div class="panel">
+    <h2>Swap</h2>
+    
+    <div class="gauge-row">
+      
+<svg class="gauge" width="140" height="140" viewBox="0 0 140 140" role="img" aria-label="Swap 0%">
+  <circle cx="70" cy="70" r="54" fill="none" stroke="var(--track)" stroke-width="12"/>
+  <circle cx="70" cy="70" r="54" fill="none" stroke="#2f9e44" stroke-width="12"
+          stroke-dasharray="0 339.29" stroke-linecap="round"
+          transform="rotate(-90 70 70)"/>
+  <text class="value" x="70" y="70" text-anchor="middle" dy=".1em">0%</text>
+  <text class="caption" x="70" y="70" text-anchor="middle" dy="1.75em">Swap</text>
+</svg>
+
+      <div class="stats">
+        <div><span class="k">Used</span><span class="v">0.00 MB</span></div>
+        <div><span class="k">Total</span><span class="v">4096.00 MB</span></div>
+        <div><span class="k">Free</span><span class="v">4096.00 MB</span></div>
+      </div>
+    </div>
+    
+  </div>
+  
+
+  
+  <div class="panel">
+    <h2>TCP sockets <span class="pill pill-muted">31 total</span></h2>
+    
+    <div class="stacked">
+      <span style="width:22.58%;background:#2f9e44" title="Established"></span><span style="width:64.52%;background:#3b82c4" title="Listen"></span><span style="width:9.68%;background:#e8a317" title="Time wait"></span><span style="width:3.23%;background:#8a8f98" title="Fin wait 2"></span>
+    </div>
+    <div class="legend">
+      
+      <div><span class="dot" style="background:#2f9e44"></span>Established<b>7</b></div>
+      
+      <div><span class="dot" style="background:#3b82c4"></span>Listen<b>20</b></div>
+      
+      <div><span class="dot" style="background:#e8a317"></span>Time wait<b>3</b></div>
+      
+      <div><span class="dot" style="background:#8a8f98"></span>Fin wait 2<b>1</b></div>
+      
+    </div>
+    
+  </div>
+  
+
+</div>
+
+
+<div class="panel span-all" style="margin-top:1rem">
+  <h2>Pressure stall information
+    <span class="pill pill-muted">cgroup</span>
+  </h2>
+  <div class="grid">
+    
+    <div>
+      <div class="stats" style="margin-bottom:.5rem">
+        <div><span class="k"><b style="color:var(--ink)">CPU</b> &mdash; some</span><span class="v">3.658s stalled</span></div>
+      </div>
+      
+<div class="bars">
+
+  <div class="bar-line">
+    <span class="lbl">10s</span>
+    <span class="track"><span class="fill" style="width:0%;background:#2f9e44"></span></span>
+    <span class="val">0.00%</span>
+  </div>
+
+  <div class="bar-line">
+    <span class="lbl">60s</span>
+    <span class="track"><span class="fill" style="width:0%;background:#2f9e44"></span></span>
+    <span class="val">0.00%</span>
+  </div>
+
+  <div class="bar-line">
+    <span class="lbl">300s</span>
+    <span class="track"><span class="fill" style="width:0%;background:#2f9e44"></span></span>
+    <span class="val">0.00%</span>
+  </div>
+
+</div>
+
+      
+        <div class="stats" style="margin:.7rem 0 .5rem"><div><span class="k">full</span><span class="v"></span></div></div>
+        
+<div class="bars">
+
+  <div class="bar-line">
+    <span class="lbl">10s</span>
+    <span class="track"><span class="fill" style="width:0%;background:#2f9e44"></span></span>
+    <span class="val">0.00%</span>
+  </div>
+
+  <div class="bar-line">
+    <span class="lbl">60s</span>
+    <span class="track"><span class="fill" style="width:0%;background:#2f9e44"></span></span>
+    <span class="val">0.00%</span>
+  </div>
+
+  <div class="bar-line">
+    <span class="lbl">300s</span>
+    <span class="track"><span class="fill" style="width:0%;background:#2f9e44"></span></span>
+    <span class="val">0.00%</span>
+  </div>
+
+</div>
+
+      
+    </div>
+    
+    <div>
+      <div class="stats" style="margin-bottom:.5rem">
+        <div><span class="k"><b style="color:var(--ink)">Memory</b> &mdash; some</span><span class="v">0s stalled</span></div>
+      </div>
+      
+<div class="bars">
+
+  <div class="bar-line">
+    <span class="lbl">10s</span>
+    <span class="track"><span class="fill" style="width:0%;background:#2f9e44"></span></span>
+    <span class="val">0.00%</span>
+  </div>
+
+  <div class="bar-line">
+    <span class="lbl">60s</span>
+    <span class="track"><span class="fill" style="width:0%;background:#2f9e44"></span></span>
+    <span class="val">0.00%</span>
+  </div>
+
+  <div class="bar-line">
+    <span class="lbl">300s</span>
+    <span class="track"><span class="fill" style="width:0%;background:#2f9e44"></span></span>
+    <span class="val">0.00%</span>
+  </div>
+
+</div>
+
+      
+        <div class="stats" style="margin:.7rem 0 .5rem"><div><span class="k">full</span><span class="v"></span></div></div>
+        
+<div class="bars">
+
+  <div class="bar-line">
+    <span class="lbl">10s</span>
+    <span class="track"><span class="fill" style="width:0%;background:#2f9e44"></span></span>
+    <span class="val">0.00%</span>
+  </div>
+
+  <div class="bar-line">
+    <span class="lbl">60s</span>
+    <span class="track"><span class="fill" style="width:0%;background:#2f9e44"></span></span>
+    <span class="val">0.00%</span>
+  </div>
+
+  <div class="bar-line">
+    <span class="lbl">300s</span>
+    <span class="track"><span class="fill" style="width:0%;background:#2f9e44"></span></span>
+    <span class="val">0.00%</span>
+  </div>
+
+</div>
+
+      
+    </div>
+    
+    <div>
+      <div class="stats" style="margin-bottom:.5rem">
+        <div><span class="k"><b style="color:var(--ink)">I/O</b> &mdash; some</span><span class="v">14.868s stalled</span></div>
+      </div>
+      
+<div class="bars">
+
+  <div class="bar-line">
+    <span class="lbl">10s</span>
+    <span class="track"><span class="fill" style="width:0%;background:#2f9e44"></span></span>
+    <span class="val">0.00%</span>
+  </div>
+
+  <div class="bar-line">
+    <span class="lbl">60s</span>
+    <span class="track"><span class="fill" style="width:0%;background:#2f9e44"></span></span>
+    <span class="val">0.00%</span>
+  </div>
+
+  <div class="bar-line">
+    <span class="lbl">300s</span>
+    <span class="track"><span class="fill" style="width:0.04%;background:#2f9e44"></span></span>
+    <span class="val">0.04%</span>
+  </div>
+
+</div>
+
+      
+        <div class="stats" style="margin:.7rem 0 .5rem"><div><span class="k">full</span><span class="v"></span></div></div>
+        
+<div class="bars">
+
+  <div class="bar-line">
+    <span class="lbl">10s</span>
+    <span class="track"><span class="fill" style="width:0%;background:#2f9e44"></span></span>
+    <span class="val">0.00%</span>
+  </div>
+
+  <div class="bar-line">
+    <span class="lbl">60s</span>
+    <span class="track"><span class="fill" style="width:0%;background:#2f9e44"></span></span>
+    <span class="val">0.00%</span>
+  </div>
+
+  <div class="bar-line">
+    <span class="lbl">300s</span>
+    <span class="track"><span class="fill" style="width:0.02%;background:#2f9e44"></span></span>
+    <span class="val">0.02%</span>
+  </div>
+
+</div>
+
+      
+    </div>
+    
+  </div>
+  <p class="note" style="margin:.9rem 0 0">
+    <b>some</b> is the share of time at least one task was stalled; <b>full</b> is the share where nothing ran at all.
+    Percentages are over the last 10, 60 and 300 seconds.
+  </p>
+</div>
+
+
+
+<div class="panel span-all" style="margin-top:1rem">
+  <h2>Temperatures</h2>
+  <div class="temp-grid">
+    
+    <div class="temp">
+      
+<svg class="gauge" width="140" height="140" viewBox="0 0 140 140" role="img" aria-label="temp1 28°">
+  <circle cx="70" cy="70" r="54" fill="none" stroke="var(--track)" stroke-width="12"/>
+  <circle cx="70" cy="70" r="54" fill="none" stroke="#2f9e44" stroke-width="12"
+          stroke-dasharray="94.32 244.97" stroke-linecap="round"
+          transform="rotate(-90 70 70)"/>
+  <text class="value" x="70" y="70" text-anchor="middle" dy=".1em">28°</text>
+  <text class="caption" x="70" y="70" text-anchor="middle" dy="1.75em">temp1</text>
+</svg>
+
+      <div class="chip" title="acpitz">acpitz</div>
+      <div class="lim">no thresholds published</div>
+    </div>
+    
+    <div class="temp">
+      
+<svg class="gauge" width="140" height="140" viewBox="0 0 140 140" role="img" aria-label="Core 0 41°">
+  <circle cx="70" cy="70" r="54" fill="none" stroke="var(--track)" stroke-width="12"/>
+  <circle cx="70" cy="70" r="54" fill="none" stroke="#2f9e44" stroke-width="12"
+          stroke-dasharray="132.49 206.81" stroke-linecap="round"
+          transform="rotate(-90 70 70)"/>
+  <text class="value" x="70" y="70" text-anchor="middle" dy=".1em">41°</text>
+  <text class="caption" x="70" y="70" text-anchor="middle" dy="1.75em">Core 0</text>
+</svg>
+
+      <div class="chip" title="coretemp">coretemp</div>
+      <div class="lim">high 105°C, crit 105°C</div>
+    </div>
+    
+    <div class="temp">
+      
+<svg class="gauge" width="140" height="140" viewBox="0 0 140 140" role="img" aria-label="Core 1 41°">
+  <circle cx="70" cy="70" r="54" fill="none" stroke="var(--track)" stroke-width="12"/>
+  <circle cx="70" cy="70" r="54" fill="none" stroke="#2f9e44" stroke-width="12"
+          stroke-dasharray="132.49 206.81" stroke-linecap="round"
+          transform="rotate(-90 70 70)"/>
+  <text class="value" x="70" y="70" text-anchor="middle" dy=".1em">41°</text>
+  <text class="caption" x="70" y="70" text-anchor="middle" dy="1.75em">Core 1</text>
+</svg>
+
+      <div class="chip" title="coretemp">coretemp</div>
+      <div class="lim">high 105°C, crit 105°C</div>
+    </div>
+    
+    <div class="temp">
+      
+<svg class="gauge" width="140" height="140" viewBox="0 0 140 140" role="img" aria-label="Core 2 41°">
+  <circle cx="70" cy="70" r="54" fill="none" stroke="var(--track)" stroke-width="12"/>
+  <circle cx="70" cy="70" r="54" fill="none" stroke="#2f9e44" stroke-width="12"
+          stroke-dasharray="132.49 206.81" stroke-linecap="round"
+          transform="rotate(-90 70 70)"/>
+  <text class="value" x="70" y="70" text-anchor="middle" dy=".1em">41°</text>
+  <text class="caption" x="70" y="70" text-anchor="middle" dy="1.75em">Core 2</text>
+</svg>
+
+      <div class="chip" title="coretemp">coretemp</div>
+      <div class="lim">high 105°C, crit 105°C</div>
+    </div>
+    
+    <div class="temp">
+      
+<svg class="gauge" width="140" height="140" viewBox="0 0 140 140" role="img" aria-label="Core 3 41°">
+  <circle cx="70" cy="70" r="54" fill="none" stroke="var(--track)" stroke-width="12"/>
+  <circle cx="70" cy="70" r="54" fill="none" stroke="#2f9e44" stroke-width="12"
+          stroke-dasharray="132.49 206.81" stroke-linecap="round"
+          transform="rotate(-90 70 70)"/>
+  <text class="value" x="70" y="70" text-anchor="middle" dy=".1em">41°</text>
+  <text class="caption" x="70" y="70" text-anchor="middle" dy="1.75em">Core 3</text>
+</svg>
+
+      <div class="chip" title="coretemp">coretemp</div>
+      <div class="lim">high 105°C, crit 105°C</div>
+    </div>
+    
+    <div class="temp">
+      
+<svg class="gauge" width="140" height="140" viewBox="0 0 140 140" role="img" aria-label="Package id 0 44°">
+  <circle cx="70" cy="70" r="54" fill="none" stroke="var(--track)" stroke-width="12"/>
+  <circle cx="70" cy="70" r="54" fill="none" stroke="#2f9e44" stroke-width="12"
+          stroke-dasharray="142.18 197.11" stroke-linecap="round"
+          transform="rotate(-90 70 70)"/>
+  <text class="value" x="70" y="70" text-anchor="middle" dy=".1em">44°</text>
+  <text class="caption" x="70" y="70" text-anchor="middle" dy="1.75em">Package id 0</text>
+</svg>
+
+      <div class="chip" title="coretemp">coretemp</div>
+      <div class="lim">high 105°C, crit 105°C</div>
+    </div>
+    
+    <div class="temp">
+      
+<svg class="gauge" width="140" height="140" viewBox="0 0 140 140" role="img" aria-label="Composite 36°">
+  <circle cx="70" cy="70" r="54" fill="none" stroke="var(--track)" stroke-width="12"/>
+  <circle cx="70" cy="70" r="54" fill="none" stroke="#2f9e44" stroke-width="12"
+          stroke-dasharray="143.35 195.94" stroke-linecap="round"
+          transform="rotate(-90 70 70)"/>
+  <text class="value" x="70" y="70" text-anchor="middle" dy=".1em">36°</text>
+  <text class="caption" x="70" y="70" text-anchor="middle" dy="1.75em">Composite</text>
+</svg>
+
+      <div class="chip" title="nvme">nvme</div>
+      <div class="lim">high 82°C, crit 85°C</div>
+    </div>
+    
+    <div class="temp">
+      
+<svg class="gauge" width="140" height="140" viewBox="0 0 140 140" role="img" aria-label="Sensor 1 36°">
+  <circle cx="70" cy="70" r="54" fill="none" stroke="var(--track)" stroke-width="12"/>
+  <circle cx="70" cy="70" r="54" fill="none" stroke="#2f9e44" stroke-width="12"
+          stroke-dasharray="0.19 339.11" stroke-linecap="round"
+          transform="rotate(-90 70 70)"/>
+  <text class="value" x="70" y="70" text-anchor="middle" dy=".1em">36°</text>
+  <text class="caption" x="70" y="70" text-anchor="middle" dy="1.75em">Sensor 1</text>
+</svg>
+
+      <div class="chip" title="nvme">nvme</div>
+      <div class="lim">high 65262°C</div>
+    </div>
+    
+  </div>
+</div>
+
+
+
+<div class="panel span-all" style="margin-top:1rem">
+  <h2>Filesystems</h2>
+  <div class="scroll">
+  <table>
+    <thead><tr>
+      <th>Mounted on</th><th>Device</th><th>Type</th><th style="width:26%">Usage</th>
+      <th class="num">Used</th><th class="num">Size</th><th class="num">Available</th><th class="num">Inodes</th>
+    </tr></thead>
+    <tbody>
+    
+      <tr>
+        <td class="mono">/mnt/torrents</td>
+        <td class="mono trunc">/dev/sdc1</td>
+        <td>ext4</td>
+        <td>
+          <span class="track" style="display:block"><span class="fill" style="width:93.44%;background:#d64545"></span></span>
+        </td>
+        <td class="num">437613.52 MB</td>
+        <td class="num">468355.66 MB</td>
+        <td class="num">6879.19 MB</td>
+        <td class="num">1%</td>
+      </tr>
+    
+      <tr>
+        <td class="mono">/mnt/shared</td>
+        <td class="mono trunc">/dev/md0</td>
+        <td>ext4</td>
+        <td>
+          <span class="track" style="display:block"><span class="fill" style="width:76.43%;background:#e8a317"></span></span>
+        </td>
+        <td class="num">1434210.55 MB</td>
+        <td class="num">1876557.26 MB</td>
+        <td class="num">346950.75 MB</td>
+        <td class="num">1%</td>
+      </tr>
+    
+      <tr>
+        <td class="mono">/sys/firmware/efi/efivars</td>
+        <td class="mono trunc">efivarfs</td>
+        <td>efivarfs</td>
+        <td>
+          <span class="track" style="display:block"><span class="fill" style="width:44.38%;background:#2f9e44"></span></span>
+        </td>
+        <td class="num">0.08 MB</td>
+        <td class="num">0.19 MB</td>
+        <td class="num">0.10 MB</td>
+        <td class="num">0%</td>
+      </tr>
+    
+      <tr>
+        <td class="mono">/</td>
+        <td class="mono trunc">/dev/nvme0n1p2</td>
+        <td>ext4</td>
+        <td>
+          <span class="track" style="display:block"><span class="fill" style="width:13.08%;background:#2f9e44"></span></span>
+        </td>
+        <td class="num">15506.88 MB</td>
+        <td class="num">118554.67 MB</td>
+        <td class="num">96980.44 MB</td>
+        <td class="num">4%</td>
+      </tr>
+    
+      <tr>
+        <td class="mono">/boot/efi</td>
+        <td class="mono trunc">/dev/nvme0n1p1</td>
+        <td>vfat</td>
+        <td>
+          <span class="track" style="display:block"><span class="fill" style="width:0.57%;background:#2f9e44"></span></span>
+        </td>
+        <td class="num">6.14 MB</td>
+        <td class="num">1072.88 MB</td>
+        <td class="num">1066.74 MB</td>
+        <td class="num">0%</td>
+      </tr>
+    
+    </tbody>
+  </table>
+  </div>
+</div>
+
+
+<div class="grid wide" style="margin-top:1rem">
+
+  
+  <div class="panel">
+    <h2>Disk I/O <span class="pill pill-muted">rates</span></h2>
+    <div class="scroll">
+    <table>
+      <thead><tr><th>Device</th><th class="num">Read</th><th class="num">Write</th><th class="num">IOPS</th><th style="width:22%">Util</th></tr></thead>
+      <tbody>
+      
+        <tr>
+          <td class="mono">md0</td>
+          <td class="num">idle</td>
+          <td class="num">idle</td>
+          <td class="num">0 r/s, 0 w/s</td>
+          <td><span class="track" style="display:block"><span class="fill" style="width:0%;background:#2f9e44"></span></span></td>
+        </tr>
+      
+        <tr>
+          <td class="mono">nvme0n1</td>
+          <td class="num">idle</td>
+          <td class="num">idle</td>
+          <td class="num">0 r/s, 0 w/s</td>
+          <td><span class="track" style="display:block"><span class="fill" style="width:0%;background:#2f9e44"></span></span></td>
+        </tr>
+      
+        <tr>
+          <td class="mono">nvme0n1p1</td>
+          <td class="num">idle</td>
+          <td class="num">idle</td>
+          <td class="num">0 r/s, 0 w/s</td>
+          <td><span class="track" style="display:block"><span class="fill" style="width:0%;background:#2f9e44"></span></span></td>
+        </tr>
+      
+        <tr>
+          <td class="mono">nvme0n1p2</td>
+          <td class="num">idle</td>
+          <td class="num">idle</td>
+          <td class="num">0 r/s, 0 w/s</td>
+          <td><span class="track" style="display:block"><span class="fill" style="width:0%;background:#2f9e44"></span></span></td>
+        </tr>
+      
+        <tr>
+          <td class="mono">sda</td>
+          <td class="num">idle</td>
+          <td class="num">idle</td>
+          <td class="num">0 r/s, 0 w/s</td>
+          <td><span class="track" style="display:block"><span class="fill" style="width:0%;background:#2f9e44"></span></span></td>
+        </tr>
+      
+        <tr>
+          <td class="mono">sda1</td>
+          <td class="num">idle</td>
+          <td class="num">idle</td>
+          <td class="num">0 r/s, 0 w/s</td>
+          <td><span class="track" style="display:block"><span class="fill" style="width:0%;background:#2f9e44"></span></span></td>
+        </tr>
+      
+        <tr>
+          <td class="mono">sdb</td>
+          <td class="num">idle</td>
+          <td class="num">idle</td>
+          <td class="num">0 r/s, 0 w/s</td>
+          <td><span class="track" style="display:block"><span class="fill" style="width:0%;background:#2f9e44"></span></span></td>
+        </tr>
+      
+        <tr>
+          <td class="mono">sdb1</td>
+          <td class="num">idle</td>
+          <td class="num">idle</td>
+          <td class="num">0 r/s, 0 w/s</td>
+          <td><span class="track" style="display:block"><span class="fill" style="width:0%;background:#2f9e44"></span></span></td>
+        </tr>
+      
+        <tr>
+          <td class="mono">sdc</td>
+          <td class="num">idle</td>
+          <td class="num">idle</td>
+          <td class="num">0 r/s, 0 w/s</td>
+          <td><span class="track" style="display:block"><span class="fill" style="width:0%;background:#2f9e44"></span></span></td>
+        </tr>
+      
+        <tr>
+          <td class="mono">sdc1</td>
+          <td class="num">idle</td>
+          <td class="num">idle</td>
+          <td class="num">0 r/s, 0 w/s</td>
+          <td><span class="track" style="display:block"><span class="fill" style="width:0%;background:#2f9e44"></span></span></td>
+        </tr>
+      
+        <tr>
+          <td class="mono">sdd</td>
+          <td class="num">idle</td>
+          <td class="num">idle</td>
+          <td class="num">0 r/s, 0 w/s</td>
+          <td><span class="track" style="display:block"><span class="fill" style="width:0%;background:#2f9e44"></span></span></td>
+        </tr>
+      
+      </tbody>
+    </table>
+    </div>
+    <p class="note" style="margin:.8rem 0 0">Derived from two <code>/proc/diskstats</code> reads via <code>RatesSince</code>; the raw counters are cumulative since boot.</p>
+  </div>
+  
+
+  
+  <div class="panel">
+    <h2>Network interfaces</h2>
+    <div class="scroll">
+    <table>
+      <thead><tr><th>Interface</th><th>Address</th><th class="num">Rx</th><th class="num">Tx</th><th class="num">Rx/s</th><th class="num">Tx/s</th></tr></thead>
+      <tbody>
+      
+        <tr>
+          <td class="mono">enp2s0
+            <span class="pill pill-ok">up</span>
+          </td>
+          <td class="mono trunc" title="fe80::caff:bfff:fe00:bbd2">192.168.123.203</td>
+          <td class="num">110.74 MB</td>
+          <td class="num">228.91 MB</td>
+          <td class="num">7.63 KB/s</td>
+          <td class="num">4.22 KB/s</td>
+        </tr>
+      
+        <tr>
+          <td class="mono">enp3s0
+            <span class="pill pill-muted">down</span>
+          </td>
+          <td class="mono trunc" title=""></td>
+          <td class="num">0 B</td>
+          <td class="num">0 B</td>
+          <td class="num">idle</td>
+          <td class="num">idle</td>
+        </tr>
+      
+        <tr>
+          <td class="mono">tailscale0
+            <span class="pill pill-muted">unknown</span>
+          </td>
+          <td class="mono trunc" title="fe80::1a9b:f49a:f400:8e00">fe80::1a9b:f49a:f400:8e00</td>
+          <td class="num">86 B</td>
+          <td class="num">2.20 KB</td>
+          <td class="num">idle</td>
+          <td class="num">idle</td>
+        </tr>
+      
+        <tr>
+          <td class="mono">wlp4s0
+            <span class="pill pill-ok">up</span>
+          </td>
+          <td class="mono trunc" title="fe80::c24b:24ff:fed4:9130">192.168.123.10</td>
+          <td class="num">16.20 MB</td>
+          <td class="num">1.72 MB</td>
+          <td class="num">649 B/s</td>
+          <td class="num">idle</td>
+        </tr>
+      
+      </tbody>
+    </table>
+    </div>
+  </div>
+  
+
+</div>
+
+
+<div class="panel span-all" style="margin-top:1rem">
+  <h2>Top processes <span class="pill pill-muted">by CPU, lifetime average</span></h2>
+  <div class="scroll">
+  <table>
+    <thead><tr>
+      <th class="num">PID</th><th>Name</th><th>User</th><th>State</th>
+      <th class="num">Threads</th><th class="num">FDs</th>
+      <th style="width:15%">CPU</th><th class="num">%</th>
+      <th style="width:15%">Memory</th><th class="num">%</th>
+      <th>Command</th>
+    </tr></thead>
+    <tbody>
+    
+      <tr>
+        <td class="num mono">16649</td>
+        <td>jellyfin</td>
+        <td>jellyfin</td>
+        <td>sleeping</td>
+        <td class="num">22</td>
+        <td class="num">n/a</td>
+        <td><span class="track" style="display:block"><span class="fill" style="width:0.27%;background:#2f9e44"></span></span></td>
+        <td class="num">0.3%</td>
+        <td><span class="track" style="display:block"><span class="fill" style="width:4.34%;background:#2f9e44"></span></span></td>
+        <td class="num">4.3%</td>
+        <td class="mono trunc" title="/usr/bin/jellyfin --webdir=/usr/share/jellyfin/web --ffmpeg=/usr/lib/jellyfin-ffmpeg/ffmpeg">/usr/bin/jellyfin --webdir=/usr/share/jellyfin/web --ffmpeg=/usr/lib/jellyfin-ffmpeg/ffmpeg</td>
+      </tr>
+    
+      <tr>
+        <td class="num mono">904</td>
+        <td>irq/155-rtw89_pci</td>
+        <td>root</td>
+        <td>sleeping</td>
+        <td class="num">1</td>
+        <td class="num">n/a</td>
+        <td><span class="track" style="display:block"><span class="fill" style="width:0.17%;background:#2f9e44"></span></span></td>
+        <td class="num">0.2%</td>
+        <td><span class="track" style="display:block"><span class="fill" style="width:0%;background:#2f9e44"></span></span></td>
+        <td class="num">0.0%</td>
+        <td class="mono trunc" title=""></td>
+      </tr>
+    
+      <tr>
+        <td class="num mono">39773</td>
+        <td>kworker/u8:1-flush-259:0</td>
+        <td>root</td>
+        <td>idle</td>
+        <td class="num">1</td>
+        <td class="num">n/a</td>
+        <td><span class="track" style="display:block"><span class="fill" style="width:0.11%;background:#2f9e44"></span></span></td>
+        <td class="num">0.1%</td>
+        <td><span class="track" style="display:block"><span class="fill" style="width:0%;background:#2f9e44"></span></span></td>
+        <td class="num">0.0%</td>
+        <td class="mono trunc" title=""></td>
+      </tr>
+    
+      <tr>
+        <td class="num mono">44107</td>
+        <td>kworker/u8:2-efi_rts_wq</td>
+        <td>root</td>
+        <td>idle</td>
+        <td class="num">1</td>
+        <td class="num">n/a</td>
+        <td><span class="track" style="display:block"><span class="fill" style="width:0.11%;background:#2f9e44"></span></span></td>
+        <td class="num">0.1%</td>
+        <td><span class="track" style="display:block"><span class="fill" style="width:0%;background:#2f9e44"></span></span></td>
+        <td class="num">0.0%</td>
+        <td class="mono trunc" title=""></td>
+      </tr>
+    
+      <tr>
+        <td class="num mono">1049</td>
+        <td>tailscaled</td>
+        <td>root</td>
+        <td>sleeping</td>
+        <td class="num">11</td>
+        <td class="num">n/a</td>
+        <td><span class="track" style="display:block"><span class="fill" style="width:0.08%;background:#2f9e44"></span></span></td>
+        <td class="num">0.1%</td>
+        <td><span class="track" style="display:block"><span class="fill" style="width:0.51%;background:#2f9e44"></span></span></td>
+        <td class="num">0.5%</td>
+        <td class="mono trunc" title="/usr/sbin/tailscaled --state=/var/lib/tailscale/tailscaled.state --socket=/run/tailscale/tailscaled.sock --port=41641">/usr/sbin/tailscaled --state=/var/lib/tailscale/tailscaled.state --socket=/run/tailscale/tailscaled.sock --port=41641</td>
+      </tr>
+    
+      <tr>
+        <td class="num mono">17547</td>
+        <td>qbittorrent-nox</td>
+        <td>qbtuser</td>
+        <td>sleeping</td>
+        <td class="num">9</td>
+        <td class="num">n/a</td>
+        <td><span class="track" style="display:block"><span class="fill" style="width:0.08%;background:#2f9e44"></span></span></td>
+        <td class="num">0.1%</td>
+        <td><span class="track" style="display:block"><span class="fill" style="width:0.58%;background:#2f9e44"></span></span></td>
+        <td class="num">0.6%</td>
+        <td class="mono trunc" title="/usr/bin/qbittorrent-nox">/usr/bin/qbittorrent-nox</td>
+      </tr>
+    
+      <tr>
+        <td class="num mono">44607</td>
+        <td>kworker/u8:0-events_unbound</td>
+        <td>root</td>
+        <td>idle</td>
+        <td class="num">1</td>
+        <td class="num">n/a</td>
+        <td><span class="track" style="display:block"><span class="fill" style="width:0.08%;background:#2f9e44"></span></span></td>
+        <td class="num">0.1%</td>
+        <td><span class="track" style="display:block"><span class="fill" style="width:0%;background:#2f9e44"></span></span></td>
+        <td class="num">0.0%</td>
+        <td class="mono trunc" title=""></td>
+      </tr>
+    
+      <tr>
+        <td class="num mono">43486</td>
+        <td>kworker/u8:3-events_power_efficient</td>
+        <td>root</td>
+        <td>idle</td>
+        <td class="num">1</td>
+        <td class="num">n/a</td>
+        <td><span class="track" style="display:block"><span class="fill" style="width:0.06%;background:#2f9e44"></span></span></td>
+        <td class="num">0.1%</td>
+        <td><span class="track" style="display:block"><span class="fill" style="width:0%;background:#2f9e44"></span></span></td>
+        <td class="num">0.0%</td>
+        <td class="mono trunc" title=""></td>
+      </tr>
+    
+    </tbody>
+  </table>
+  </div>
+</div>
+
+
+
+
+<footer>
+  Generated by <code>example/</code> in
+  <a href="https://github.com/dhamith93/systats">github.com/dhamith93/systats</a>.
+  Self-contained: no scripts, no external assets.
+</footer>
+
+</div>
+</body>
+</html>
