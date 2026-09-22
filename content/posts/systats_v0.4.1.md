@@ -121,7 +121,7 @@ go run ./example -serve :8080
 
 [systats example dashboard - VM](/reports/dashboard-vm.html)
 
-[systats example dashboard - Docker container](/reports/dashboard-docker.html)
+[systats example dashboard - Docker container](/reports/dashboard-container.html)
 
 ## Upgrading from v0.2.0
 
