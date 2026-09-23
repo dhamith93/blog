@@ -3,6 +3,7 @@ title: "systats v0.4.1: Container-Aware Go Module to Scrape Linux Stats"
 date: 2026-09-22T10:23:36+05:30
 tags: [go, linux, containers, kubernetes, observability]
 keywords: [go, linux, containers, kubernetes, observability]
+description: "Linux system stats for Go services; container-aware, pressure stall info, one dependency. For health endpoints, node agents and edge devices."
 author: "Dhamith Hewamullage"
 authorTwitter: "" #do not include @
 showFullContent: false
